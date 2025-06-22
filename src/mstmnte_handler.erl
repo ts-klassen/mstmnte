@@ -38,17 +38,24 @@
 %% Public API — thin wrappers that allow an optional 3rd Opts argument.
 %% ------------------------------------------------------------------
 
+-spec list(req(), state()) -> {ok, req(), state()}.
 list(Req, State)              -> list(Req, State, #{}).
+-spec get(req(), state()) -> {ok, req(), state()}.
 get(Req, State)               -> get(Req, State, #{}).
+-spec bulk_get(req(), state()) -> {ok, req(), state()}.
 bulk_get(Req, State)          -> bulk_get(Req, State, #{}).
+-spec maint_list(req(), state()) -> {ok, req(), state()}.
 maint_list(Req, State)        -> maint_list(Req, State, #{}).
+-spec maint_get(req(), state()) -> {ok, req(), state()}.
 maint_get(Req, State)         -> maint_get(Req, State, #{}).
+-spec maint_patch(req(), state()) -> {ok, req(), state()}.
 maint_patch(Req, State)       -> maint_patch(Req, State, #{}).
 
 %% ------------------------------------------------------------------
 %%  Implementation
 %% ------------------------------------------------------------------
 
+-spec list(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 list(Req0, State, Opts) ->
     Config = db_config(Opts),
     case mstmnte_db:list(Config) of
@@ -59,6 +66,7 @@ list(Req0, State, Opts) ->
     end.
 
 
+-spec get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 get(Req0, State, Opts) ->
     Config = db_config(Opts),
     {Id, Req1} = cowboy_req:binding(<<"id">>, Req0),
@@ -72,6 +80,7 @@ get(Req0, State, Opts) ->
     end.
 
 
+-spec bulk_get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 bulk_get(Req0, State, Opts) ->
     Config = db_config(Opts),
     {ok, Body, Req1} = read_json_body(Req0),
@@ -88,15 +97,18 @@ bulk_get(Req0, State, Opts) ->
     end.
 
 
+-spec maint_list(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 maint_list(Req0, State, Opts) ->
     %% Currently identical to list/3; kept separate for future rules.
     list(Req0, State, Opts).
 
 
+-spec maint_get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 maint_get(Req0, State, Opts) ->
     get(Req0, State, Opts).
 
 
+-spec maint_patch(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 maint_patch(Req0, State, Opts) ->
     Config = db_config(Opts),
     {ok, Doc, Req1} = read_json_body(Req0),
