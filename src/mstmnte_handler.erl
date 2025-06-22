@@ -62,7 +62,7 @@ maint_patch(Req, State)       -> maint_patch(Req, State, #{}).
 
 -spec list(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 list(Req0, State, Opts) ->
-    Config = db_config(Opts),
+    Config = mstmnte:db_config(Opts),
     case mstmnte_db:list(Config) of
         {ok, Ids} ->
             send_json(Req0, State, 200, Ids);
@@ -73,7 +73,7 @@ list(Req0, State, Opts) ->
 
 -spec get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 get(Req0, State, Opts) ->
-    Config = db_config(Opts),
+    Config = mstmnte:db_config(Opts),
     {Id, Req1} = cowboy_req:binding(<<"id">>, Req0),
     case mstmnte_db:get(Id, Config) of
         {ok, Doc} ->
@@ -87,7 +87,7 @@ get(Req0, State, Opts) ->
 
 -spec bulk_get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 bulk_get(Req0, State, Opts) ->
-    Config = db_config(Opts),
+    Config = mstmnte:db_config(Opts),
     {ok, Body, Req1} = read_json_body(Req0),
     Ids = case Body of
               [] -> all;
@@ -115,7 +115,7 @@ maint_get(Req0, State, Opts) ->
 
 -spec maint_patch(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 maint_patch(Req0, State, Opts) ->
-    Config = db_config(Opts),
+    Config = mstmnte:db_config(Opts),
     {ok, Doc, Req1} = read_json_body(Req0),
     case maps:is_key(<<"_id">>, Doc) of
         true -> ok;
@@ -131,10 +131,6 @@ maint_patch(Req0, State, Opts) ->
 %% ------------------------------------------------------------------
 %% Helper fns
 %% ------------------------------------------------------------------
-%% Return the DB configuration map extracted from Opts.
--spec db_config(mstmnte:opts()) -> mstmnte_db:config().
-db_config(Opts) ->
-    maps:get(klsn_db, Opts, #{}).
 
 %% Encode Data as JSON and send it with the given HTTP status.
 -spec send_json(req(), state(), pos_integer(), jsone:json_value()) -> {ok, req(), state()}.

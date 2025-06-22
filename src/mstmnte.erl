@@ -5,25 +5,25 @@
 %% CouchDB database exists before the HTTP layer starts serving requests.
 %% ------------------------------------------------------------------
 
--export([init/0, init/1]).
+-export([init/0, init/1, db_config/1]).
 -export_type([opts/0]).
 
 %% Options map passed around by the public API and HTTP handlers.
--type opts() :: #{klsn_db := mstmnte_db:config()}.
+-type opts() :: #{klsn_db => mstmnte_db:config()}.
 
 %% @doc Ensure the default (or configured) database exists.
 -spec init() -> ok.
 init() ->
-    Opts = application:get_env(mstmnte, klsn_db, #{}),
-    init(Opts).
+    init(#{}).
 
 %% @doc Ensure the database described by Opts exists.
 -spec init(opts()) -> ok.
-init(#{klsn_db := DbCfg0}) when is_map(DbCfg0) ->
-    Default = #{db_name => <<"mstmnte">>, db_info => #{}},
-    Config  = maps:merge(Default, DbCfg0),
-    mstmnte_db:create_db(Config);
+init(Opts) ->
+    Config  = db_config(Opts),
+    mstmnte_db:create_db(Config).
 
-%% Guard against accidental misuse.
-init(Other) ->
-    error({invalid_opts, Other}).
+-spec db_config(opts()) -> mstmnte_db:config().
+db_config(Opts) ->
+    Default = #{db_name => <<"mstmnte">>, db_info => klsn_db:db_info()},
+    AppDbInfo = application:get_env(mstmnte, klsn_db, #{}),
+    maps:merge(Default, maps:get(klsn_db, Opts, AppDbInfo)).

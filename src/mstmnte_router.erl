@@ -13,7 +13,7 @@
 
 -spec api() -> routes().
 api() ->
-    Opts = #{klsn_db => db_opts()},
+    Opts = #{klsn_db => mstmnte:db_config(#{})},
     [
         %% Master endpoints
         { <<"/mstmnte/master">>,          [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, list,      Opts}},
@@ -25,11 +25,6 @@ api() ->
         { <<"/mstmnte/maintenance/:id">>, [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, maint_get,   Opts}},
         { <<"/mstmnte/maintenance">>,     [{method, <<"PATCH">>}], mstmnte_route, {mstmnte_handler, maint_patch, Opts}}
     ].
-
--spec db_opts() -> mstmnte_db:config().
-db_opts() ->
-    User = application:get_env(mstmnte, klsn_db, #{}),
-    maps:merge(#{db_name => <<"mstmnte">>, db_info => #{}}, User).
 
 %% Static assets route list.
 -spec webui() -> routes().
