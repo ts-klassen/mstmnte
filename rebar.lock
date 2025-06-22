@@ -4,5 +4,5 @@
   1},
  {<<"klsn">>,
   {git,"https://github.com/ts-klassen/klsn.git",
-       {ref,"fad276127730bbb5958a9e4a474ba3a7d4a795d5"}},
+       {ref,"7ef5d1ef466201c7da9514aa32be883f2b096494"}},
   0}].
