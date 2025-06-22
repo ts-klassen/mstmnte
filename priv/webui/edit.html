@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mstmnte – Edit maintenance</title>
+  <style>
+    body {font-family:sans-serif; margin:0; padding:0;}
+    header {background:#222; color:#fff; padding:1rem;}
+    main {padding:1rem; max-width:800px; margin:auto;}
+    label {display:block; margin-top:1rem;}
+    textarea {width:100%; height:300px; font-family:monospace;}
+    button {margin-top:1rem; padding:0.5rem 1rem;}
+    pre {background:#f4f4f4; padding:1rem; overflow:auto;}
+    .error {color:#b30000;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>mstmnte – Maintenance editor (PATCH)</h1>
+  </header>
+  <main>
+
+    <section>
+      <h2>Load existing document</h2>
+      <div>
+        <label>
+          Document ID:
+          <input type="text" id="load-id" placeholder="maintenance_123" />
+        </label>
+        <button onclick="loadDoc()">Load</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Edit / create</h2>
+      <label for="json-body">JSON document (must include \u201c_id\u201d)</label>
+      <textarea id="json-body" spellcheck="false">{
+  "_id": "maintenance_123",
+  "foo": "bar"
+}</textarea>
+
+      <button onclick="sendPatch()">PATCH /mstmnte/maintenance</button>
+
+      <h3>Response</h3>
+      <pre id="resp"></pre>
+    </section>
+
+  </main>
+
+  <script>
+    async function fetchJson(path, opts = {}) {
+      const res = await fetch(path, opts);
+      const txt = await res.text();
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${txt}`);
+      }
+      try {
+        return JSON.parse(txt);
+      } catch (_) {
+        return txt;
+      }
+    }
+
+    function setResponse(content, isError=false) {
+      const pre = document.getElementById('resp');
+      pre.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+      pre.className = isError ? 'error' : '';
+    }
+
+    async function loadDoc() {
+      const id = document.getElementById('load-id').value.trim();
+      if (!id) return alert('Please enter an ID');
+      try {
+        const doc = await fetchJson(`/mstmnte/maintenance/${encodeURIComponent(id)}`);
+        document.getElementById('json-body').value = JSON.stringify(doc, null, 2);
+        setResponse('Loaded.');
+      } catch (err) {
+        setResponse(err.message, true);
+      }
+    }
+
+    async function sendPatch() {
+      let bodyStr = document.getElementById('json-body').value;
+      let payload;
+      try {
+        payload = JSON.parse(bodyStr);
+      } catch (_) {
+        return alert('Invalid JSON');
+      }
+      if (!('_id' in payload)) {
+        return alert('Document must include "_id".');
+      }
+      try {
+        const resp = await fetchJson('/mstmnte/maintenance', {
+          method: 'PATCH',
+          headers: {'content-type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        setResponse(resp);
+      } catch (err) {
+        setResponse(err.message, true);
+      }
+    }
+  </script>
+</body>
+</html>
