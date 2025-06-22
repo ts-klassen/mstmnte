@@ -15,15 +15,23 @@
 api() ->
     Opts = #{klsn_db => mstmnte:db_config(#{})},
     [
-        %% Master endpoints
-        { <<"/mstmnte/master">>,          [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, list,      Opts}},
-        { <<"/mstmnte/master">>,          [{method, <<"POST">>}], mstmnte_route, {mstmnte_handler, bulk_get,  Opts}},
-        { <<"/mstmnte/master/:id">>,      [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, get,       Opts}},
+        %% Master endpoints (GET and POST share the same path).
+        { <<"/mstmnte/master">>, mstmnte_route,
+          {mstmnte_handler,
+           #{ <<"GET">>  => list,
+              <<"POST">> => bulk_get },
+           Opts}},
 
-        %% Maintenance endpoints
-        { <<"/mstmnte/maintenance">>,     [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, maint_list,  Opts}},
-        { <<"/mstmnte/maintenance/:id">>, [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, maint_get,   Opts}},
-        { <<"/mstmnte/maintenance">>,     [{method, <<"PATCH">>}], mstmnte_route, {mstmnte_handler, maint_patch, Opts}}
+        { <<"/mstmnte/master/:id">>, mstmnte_route, {mstmnte_handler, get, Opts}},
+
+        %% Maintenance endpoints (GET and PATCH share the same path).
+        { <<"/mstmnte/maintenance">>, mstmnte_route,
+          {mstmnte_handler,
+           #{ <<"GET">>   => maint_list,
+              <<"PATCH">> => maint_patch },
+           Opts}},
+
+        { <<"/mstmnte/maintenance/:id">>, mstmnte_route, {mstmnte_handler, maint_get, Opts}}
     ].
 
 %% Static assets route list.
