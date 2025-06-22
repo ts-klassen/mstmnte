@@ -49,16 +49,24 @@
     }
 
     async function loadMasters() {
-      const list = await fetchJson('/mstmnte/master');
+      const ids = await fetchJson('/mstmnte/master');
       const map = {};
-      list.forEach(doc => map[doc._id] = doc);
+      for (const id of ids) {
+        try {
+          map[id] = await fetchJson(`/mstmnte/master/${encodeURIComponent(id)}`);
+        } catch (_) {}
+      }
       renderTable('tbl-masters', map);
     }
 
     async function loadMaint() {
-      const list = await fetchJson('/mstmnte/maintenance');
+      const ids = await fetchJson('/mstmnte/maintenance');
       const map = {};
-      list.forEach(doc => map[doc._id] = doc);
+      for (const id of ids) {
+        try {
+          map[id] = await fetchJson(`/mstmnte/maintenance/${encodeURIComponent(id)}`);
+        } catch (_) {}
+      }
       renderTable('tbl-maint', map);
     }
 

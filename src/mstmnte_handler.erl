@@ -53,8 +53,8 @@ maint_patch(Req, State)       -> maint_patch(Req, State, #{}).
 list(Req0, State, Opts) ->
     Config = db_config(Opts),
     case mstmnte_db:list(Config) of
-        {ok, Docs} ->
-            send_json(Req0, State, 200, Docs);
+        {ok, Ids} ->
+            send_json(Req0, State, 200, Ids);
         {error, no_db} ->
             send_json(Req0, State, 500, #{error => no_db})
     end.
@@ -135,8 +135,7 @@ read_json_body(Req0) ->
 %% Bulk get helper — when Ids == all we return a map of all masters.
 bulk_get_docs(all, Config) ->
     case mstmnte_db:list(Config) of
-        {ok, Docs} ->
-            {ok, lists_to_map(Docs)};
+        {ok, Ids} -> bulk_get_docs(Ids, Config);
         Error -> Error
     end;
 bulk_get_docs(Ids, Config) when is_list(Ids) ->
@@ -154,4 +153,5 @@ bulk_get_docs(Ids, Config) when is_list(Ids) ->
     end.
 
 
-lists_to_map(List) -> maps:from_list([{maps:get(<<"_id">>, D), D} || D <- List]).
+%% Not used anymore.
+

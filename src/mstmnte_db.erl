@@ -33,10 +33,9 @@
 list(#{db_name:=DB, db_info:=Info}) ->
     case klsn_db:lookup(DB, {raw, <<"/_all_docs">>}, Info) of
         {value, Doc} ->
-            lists:map(fun(#{<<"id">>:=Id}) ->
-                Id
-            end, maps:get(<<"rows">>, Doc));
-        none -> 
+            Ids = [Id || #{<<"id">> := Id} <- maps:get(<<"rows">>, Doc, [])],
+            {ok, Ids};
+        none ->
             {error, no_db}
     end.
 
