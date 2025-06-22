@@ -34,7 +34,10 @@
 -type req()    :: term().
 -type state()  :: term().
 
--export_type([req/0, state/0]).
+%% Additional exported helper types
+-type docs_map() :: #{mstmnte_db:id() := mstmnte_db:doc()}.
+
+-export_type([req/0, state/0, docs_map/0]).
 
 %% ------------------------------------------------------------------
 %% Public API — thin wrappers that allow an optional 3rd Opts argument.
@@ -129,12 +132,12 @@ maint_patch(Req0, State, Opts) ->
 %% Helper fns
 %% ------------------------------------------------------------------
 %% Return the DB configuration map extracted from Opts.
--spec db_config(mstmnte:opts()) -> map().
+-spec db_config(mstmnte:opts()) -> mstmnte_db:config().
 db_config(Opts) ->
     maps:get(klsn_db, Opts, #{}).
 
 %% Encode Data as JSON and send it with the given HTTP status.
--spec send_json(req(), state(), integer(), term()) -> {ok, req(), state()}.
+-spec send_json(req(), state(), pos_integer(), jsone:json_value()) -> {ok, req(), state()}.
 send_json(Req0, State, Status, Data) ->
     Json = jsone:encode(Data),
     Req1 = cowboy_req:reply(Status, #{ <<"content-type">> => <<"application/json">> }, Json, Req0),
@@ -142,14 +145,15 @@ send_json(Req0, State, Status, Data) ->
 
 
 %% Reads the request body and decodes it as JSON.
--spec read_json_body(req()) -> {ok, term(), req()}.
+-spec read_json_body(req()) -> {ok, jsone:json_value(), req()}.
 read_json_body(Req0) ->
     {ok, BodyBin, Req1} = cowboy_req:read_body(Req0),
     {ok, jsone:decode(BodyBin), Req1}.
 
 
 %% Bulk get helper — when Ids == all we return a map of all masters.
--spec bulk_get_docs(all | list(), map()) -> {ok, map()} | {error, term()}.
+-spec bulk_get_docs(all | [mstmnte_db:id()], mstmnte_db:config()) ->
+          {ok, docs_map()} | {error, no_db | not_found}.
 bulk_get_docs(all, Config) ->
     case mstmnte_db:list(Config) of
         {ok, Ids} -> bulk_get_docs(Ids, Config);
