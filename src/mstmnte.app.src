@@ -7,7 +7,13 @@
     stdlib
    ]},
   {env,[]},
-  {modules, []},
+  {modules, [
+      mstmnte,
+      mstmnte_handler,
+      mstmnte_route,
+      mstmnte_router,
+      mstmnte_db
+  ]},
 
   {licenses, ["Apache 2.0"]},
   {links, []}
