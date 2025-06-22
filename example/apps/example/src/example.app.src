@@ -5,10 +5,12 @@
   {mod, {example_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cowboy,
+    mstmnte
    ]},
   {env,[]},
-  {modules, []},
+  {modules, [example_app, example_sup]},
 
   {licenses, ["Apache 2.0"]},
   {links, []}

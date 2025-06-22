@@ -29,7 +29,22 @@ init([]) ->
     SupFlags = #{strategy => one_for_all,
                  intensity => 0,
                  period => 1},
-    ChildSpecs = [],
+
+    Dispatch = cowboy_router:compile(
+                 mstmnte_router:api() ++
+                 mstmnte_router:webui()),
+
+    %% Start Cowboy listener under the supervisor so it gets restarted
+    %% if it crashes. We use the simple_one_for_one style child spec.
+    ChildSpecs = [
+        #{ id       => http,
+           start    => {cowboy, start_clear, [http, [{port, 8080}], #{env => #{dispatch => Dispatch}}]},
+           restart  => permanent,
+           shutdown => 5000,
+           type     => worker,
+           modules  => [cowboy] }
+    ],
+
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

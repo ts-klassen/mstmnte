@@ -17,9 +17,10 @@
 
 -type id()     :: klsn_db:id().
 -type doc()    :: klsn_db:payload().
--type config() :: #{ db_name := klsn_db:db()
-                   , db_info := klsn_db:info()
-                   }.
+%% Configuration map – both keys are mandatory; the caller ensures
+%% default values are present so this layer can rely on them.
+-type config() :: #{ db_name := klsn_db:db(),
+                    db_info := klsn_db:info() }.
 
 %% ------------------------------------------------------------------
 %% SPECS & STUBS
@@ -30,7 +31,7 @@
 %% *Config*.
 %%
 -spec list(config()) -> {ok, [id()]} | {error, no_db}.
-list(#{db_name:=DB, db_info:=Info}) ->
+list(#{db_name := DB, db_info := Info}) ->
     case klsn_db:lookup(DB, {raw, <<"/_all_docs">>}, Info) of
         {value, Doc} ->
             Ids = [Id || #{<<"id">> := Id} <- maps:get(<<"rows">>, Doc, [])],
@@ -44,7 +45,7 @@ list(#{db_name:=DB, db_info:=Info}) ->
 %% Fetch the document identified by *Id*.
 %%
 -spec get(id(), config()) -> {ok, doc()} | {error, no_db | not_found}.
-get(Id, #{db_name:=DB, db_info:=Info}) ->
+get(Id, #{db_name := DB, db_info := Info}) ->
     case klsn_db:lookup(DB, Id, Info) of
         {value, Doc} ->
             {ok, Doc};
@@ -62,7 +63,7 @@ get(Id, #{db_name:=DB, db_info:=Info}) ->
 %% Create or replace *Doc* in the configured database.
 %%
 -spec upsert(doc(), config()) -> {ok, doc()} | {error, no_db | conflict}.
-upsert(Doc=#{<<"_id">>:=Id}, #{db_name:=DB, db_info:=Info}) ->
+upsert(Doc = #{<<"_id">> := Id}, #{db_name := DB, db_info := Info}) ->
     try
         klsn_db:upsert(DB, Id, fun
             (none) ->

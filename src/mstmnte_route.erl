@@ -12,12 +12,19 @@
 %% `Module:Function/2` (or /3 when extra opts are supplied).
 %% ------------------------------------------------------------------
 
+% Cowboy handler callbacks.
+
 -export([init/2]).
 
 -type req()    :: term().
 -type state()  :: term().
 
-init(Req, {Module, Fun}) when is_atom(Module), is_atom(Fun) ->
-    %% We forward an undefined State for now; the called function can
-    %% ignore or overwrite it.
-    Module:Fun(Req, undefined).
+%% Opts may be a 2-tuple {Module, Fun} or 3-tuple {Module, Fun, Extra} where
+%% Extra becomes the 3rd argument when the target function supports it.
+init(Req, {Module, Fun}) ->
+    Module:Fun(Req, undefined);
+init(Req, {Module, Fun, Extra}) ->
+    case erlang:function_exported(Module, Fun, 3) of
+        true  -> Module:Fun(Req, undefined, Extra);
+        false -> Module:Fun(Req, undefined)
+    end.
