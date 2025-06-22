@@ -36,9 +36,13 @@ init([]) ->
 
     %% Start Cowboy listener under the supervisor so it gets restarted
     %% if it crashes. We use the simple_one_for_one style child spec.
+    %% Allow the HTTP port to be configured through the application
+    %% environment. Default to 8080 when no configuration is provided.
+    Port = application:get_env(example, port, 8080),
+
     ChildSpecs = [
         #{ id       => http,
-           start    => {cowboy, start_clear, [http, [{port, 8080}], #{env => #{dispatch => Dispatch}}]},
+           start    => {cowboy, start_clear, [http, [{port, Port}], #{env => #{dispatch => Dispatch}}]},
            restart  => permanent,
            shutdown => 5000,
            type     => worker,
