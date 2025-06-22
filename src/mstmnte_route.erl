@@ -16,6 +16,14 @@
 
 -export([init/2]).
 
+-export_type([req/0, state/0]).
+
+%% Optional additional options passed to the delegated handler.
+-type extra() :: any().
+-export_type([extra/0]).
+
+-spec init(req(), {module(), atom()} | {module(), atom(), extra()}) -> {ok, req(), state()}.
+
 -type req()    :: term().
 -type state()  :: term().
 
