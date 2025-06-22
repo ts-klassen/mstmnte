@@ -8,7 +8,8 @@
 -export([
     list/1,
     get/2,
-    upsert/2
+    upsert/2,
+    create_db/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -88,3 +89,12 @@ upsert(Doc = #{<<"_id">> := Id}, #{db_name := DB, db_info := Info}) ->
         error:not_found ->
             {error, no_db}
     end.
+
+-spec create_db(config()) -> ok.
+create_db(#{db_name := DB, db_info := Info}) ->
+    try klsn_db:create_db(DB, Info) of
+        _ -> ok
+    catch
+        error:exists -> ok
+    end.
+

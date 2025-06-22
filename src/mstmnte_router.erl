@@ -10,14 +10,14 @@ api() ->
     Opts = #{klsn_db => db_opts()},
     [
         %% Master endpoints
-        { 'GET',  <<"/mstmnte/master">>,          mstmnte_route, {mstmnte_handler, list, Opts}},
-        { 'POST', <<"/mstmnte/master">>,          mstmnte_route, {mstmnte_handler, bulk_get, Opts}},
-        { 'GET',  <<"/mstmnte/master/:id">>,      mstmnte_route, {mstmnte_handler, get, Opts}},
+        { <<"/mstmnte/master">>,          [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, list,      Opts}},
+        { <<"/mstmnte/master">>,          [{method, <<"POST">>}], mstmnte_route, {mstmnte_handler, bulk_get,  Opts}},
+        { <<"/mstmnte/master/:id">>,      [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, get,       Opts}},
 
         %% Maintenance endpoints
-        { 'GET',  <<"/mstmnte/maintenance">>,     mstmnte_route, {mstmnte_handler, maint_list, Opts}},
-        { 'GET',  <<"/mstmnte/maintenance/:id">>, mstmnte_route, {mstmnte_handler, maint_get, Opts}},
-        { 'PATCH',<<"/mstmnte/maintenance">>,     mstmnte_route, {mstmnte_handler, maint_patch, Opts}}
+        { <<"/mstmnte/maintenance">>,     [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, maint_list,  Opts}},
+        { <<"/mstmnte/maintenance/:id">>, [{method, <<"GET">>}],  mstmnte_route, {mstmnte_handler, maint_get,   Opts}},
+        { <<"/mstmnte/maintenance">>,     [{method, <<"PATCH">>}], mstmnte_route, {mstmnte_handler, maint_patch, Opts}}
     ].
 
 db_opts() ->
@@ -25,6 +25,4 @@ db_opts() ->
     maps:merge(#{db_name => <<"mstmnte">>, db_info => #{}}, User).
 
 webui() ->
-    [
-        {'GET', <<"/mstmnte/webui/[...]">>, cowboy_static, {priv_dir, mstmnte, "webui"}}
-    ].
+    [ { <<"/mstmnte/webui/[...]">>, cowboy_static, {priv_dir, mstmnte, "webui"} } ].

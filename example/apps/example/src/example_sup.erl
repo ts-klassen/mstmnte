@@ -30,9 +30,9 @@ init([]) ->
                  intensity => 0,
                  period => 1},
 
-    Dispatch = cowboy_router:compile(
-                 mstmnte_router:api() ++
-                 mstmnte_router:webui()),
+    Dispatch = cowboy_router:compile([
+                 { '_', mstmnte_router:api() ++ mstmnte_router:webui() }
+               ]),
 
     %% Start Cowboy listener under the supervisor so it gets restarted
     %% if it crashes. We use the simple_one_for_one style child spec.

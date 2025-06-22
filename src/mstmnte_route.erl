@@ -22,8 +22,10 @@
 %% Opts may be a 2-tuple {Module, Fun} or 3-tuple {Module, Fun, Extra} where
 %% Extra becomes the 3rd argument when the target function supports it.
 init(Req, {Module, Fun}) ->
+    code:ensure_loaded(Module),
     Module:Fun(Req, undefined);
 init(Req, {Module, Fun, Extra}) ->
+    code:ensure_loaded(Module),
     case erlang:function_exported(Module, Fun, 3) of
         true  -> Module:Fun(Req, undefined, Extra);
         false -> Module:Fun(Req, undefined)
