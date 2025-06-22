@@ -33,7 +33,6 @@
 
 -type req()    :: term().
 -type state()  :: term().
--type config() :: mstmnte_db:config().
 
 %% ------------------------------------------------------------------
 %% Public API — thin wrappers that allow an optional 3rd Opts argument.

@@ -30,6 +30,8 @@ init([]) ->
                  intensity => 0,
                  period => 1},
 
+    ok = mstmnte:init(),
+
     Dispatch = cowboy_router:compile([
                  { '_', mstmnte_router:api() ++ mstmnte_router:webui() }
                ]),
