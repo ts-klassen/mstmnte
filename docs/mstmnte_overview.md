@@ -8,7 +8,7 @@ Goal
   already runs Cowboy can expose
 
 ```
-/mstmnte/master       – read-only reference data
+/mstmnte/master       – read-only reference data (IDs only)
 /mstmnte/maintenance  – CRUD documents that include metadata/payload
 /mstmnte/…(static)    – vanilla HTML/JS viewer (optional)
 ```
@@ -26,11 +26,11 @@ without having to write any boiler-plate.
 ```
 mstmnte/
   src/
-    mstmnte_app.erl          (application callback)
-    mstmnte_sup.erl          (top-level supervisor)
-    mstmnte_handler.erl      (HTTP entry points – no cowboy deps)
-    mstmnte_router.erl       (router helpers – returns cowboy routes)
-    mstmnte_db.erl           (↔ klsn_db façade, *returns todo* for now)
+    mstmnte.erl          (public helpers, DB bootstrap & type specs)
+    mstmnte_handler.erl  (HTTP helpers – **no** Cowboy compile-time deps)
+    mstmnte_route.erl    (generic Cowboy wrapper → {Mod,Fun}[,Extra])
+    mstmnte_router.erl   (returns ready-made route lists)
+    mstmnte_db.erl       (tiny façade hiding the klsn_db driver)
   priv/
     webui/                   (index.html + *.css/*.js)
 ```
@@ -77,7 +77,7 @@ A. Master endpoints (read-only):
 
 | Method | Path                         | Semantics                                             |
 |--------|------------------------------|-------------------------------------------------------|
-| GET    | /mstmnte/master              | List every master document (full objects).            |
+| GET    | /mstmnte/master              | List every master *ID*.                               |
 | POST   | /mstmnte/master              | Body = list of IDs → return map *Id ➜ Doc*. If the    |
 |        |                              | body is empty/missing, return *all* masters.          |
 | GET    | /mstmnte/master/:id          | Single master; 404 if unknown.                        |
@@ -86,7 +86,7 @@ B. Maintenance endpoints:
 
 | Method | Path                                | Semantics                                    |
 |--------|-------------------------------------|----------------------------------------------|
-| GET    | /mstmnte/maintenance                | List every maintenance document (full obj).  |
+| GET    | /mstmnte/maintenance                | List every maintenance *ID*.                 |
 | GET    | /mstmnte/maintenance/:id            | Fetch one document; 404 if unknown.          |
 | PATCH  | /mstmnte/maintenance                | Create or update. Body must include `_id`.   |
 |        |                                     | Any of `_rev`, `metadata`, `payload` may be  |
@@ -158,21 +158,28 @@ Located under `priv/webui/`.
 6.  `mstmnte_db` façade
 -----------------------
 
-All DB I/O is funneled through this module so the library remains ignorant of
-the underlying driver.  **Current stub behaviour** (to be implemented later):
+All DB I/O is funneled through this *very* small layer so the rest of the
+code base can stay agnostic of the concrete CouchDB driver (`klsn_db`).  Its
+surface is purposefully minimal:
 
+```erlang
+%% List every document ID stored in the database
+-spec list(config()) -> {ok, [id()]} | {error, no_db}.
+
+%% Fetch one document by ID
+-spec get(id(), config()) -> {ok, doc()} | {error, no_db | not_found}.
+
+%% Create or replace a document. Performs a basic optimistic-locking check
+%% on the _rev field and returns `{error, conflict}` when the revision
+%% mismatch cannot be resolved.
+-spec upsert(doc(), config()) -> {ok, doc()} | {error, no_db | conflict}.
+
+%% Ensure the configured database exists – idempotent.
+-spec create_db(config()) -> ok.
 ```
-list_master(DbOpts)               -> todo.
-bulk_get_master(Ids, DbOpts)      -> todo.
-get_master(Id, DbOpts)            -> todo.
 
-list_maintenance(DbOpts)          -> todo.
-get_maintenance(Id, DbOpts)       -> todo.
-patch_maintenance(Doc, DbOpts)    -> todo.
-```
-
-The handlers only pattern-match on `{ok, Data}` / `{error, Reason}` tuples and
-convert them into the proper HTTP replies.
+`mstmnte_handler` converts those `{ok, …}` / `{error, …}` tuples into the
+appropriate HTTP status codes and JSON responses.
 
 
 

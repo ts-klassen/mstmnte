@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mstmnte – Web UI</title>
+  <style>
+    body {font-family: sans-serif; margin: 0; padding: 0;}
+    header {background:#222; color:#fff; padding:1rem;}
+    main {padding:1rem;}
+    table {border-collapse: collapse; width:100%; margin-bottom:2rem;}
+    th,td {border:1px solid #ddd; padding:0.5rem; text-align:left;}
+    th {background:#f4f4f4;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>mstmnte – Master &amp; Maintenance viewer</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Masters</h2>
+      <button onclick="loadMasters()">Reload</button>
+      <table id="tbl-masters"><thead><tr><th>ID</th><th>Document</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <section>
+      <h2>Maintenance</h2>
+      <button onclick="loadMaint()">Reload</button>
+      <table id="tbl-maint"><thead><tr><th>ID</th><th>Document</th></tr></thead><tbody></tbody></table>
+    </section>
+  </main>
+
+  <script>
+    async function fetchJson(path, opts = {}) {
+      const res = await fetch(path, opts);
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    function renderTable(tableId, data) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = '';
+      Object.entries(data).forEach(([id, doc]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${id}</td><td><pre>${JSON.stringify(doc, null, 2)}</pre></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadMasters() {
+      const ids = await fetchJson('/mstmnte/master');
+      const map = {};
+      for (const id of ids) {
+        try {
+          map[id] = await fetchJson(`/mstmnte/master/${encodeURIComponent(id)}`);
+        } catch (_) {}
+      }
+      renderTable('tbl-masters', map);
+    }
+
+    async function loadMaint() {
+      const ids = await fetchJson('/mstmnte/maintenance');
+      const map = {};
+      for (const id of ids) {
+        try {
+          map[id] = await fetchJson(`/mstmnte/maintenance/${encodeURIComponent(id)}`);
+        } catch (_) {}
+      }
+      renderTable('tbl-maint', map);
+    }
+
+    loadMasters();
+    loadMaint();
+  </script>
+</body>
+</html>
