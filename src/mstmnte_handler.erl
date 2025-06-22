@@ -90,16 +90,28 @@ get(Req0, State, Opts) ->
 bulk_get(Req0, State, Opts) ->
     Config = mstmnte:db_config(Opts),
     {ok, Body, Req1} = read_json_body(Req0),
-    Ids = case Body of
-              [] -> all;
-              L when is_list(L) -> L;
-              _ -> error(bad_request)
-          end,
+    %% Validate the request body. It must either be an empty list (meaning
+    %% "all") or a list of ids. Any other payload results in a 400 reply.
+    case Body of
+        [] ->
+            proceed_bulk_get(all, Req1, State, Config);
+        L when is_list(L) ->
+            proceed_bulk_get(L, Req1, State, Config);
+        _Invalid ->
+            %% Malformed request: respond with 400 instead of crashing.
+            send_json(Req1, State, 400, #{error => bad_request})
+    end.
+
+%% Helper that performs the actual bulk get once the request body has been
+%% validated.
+-spec proceed_bulk_get(all | [mstmnte_db:id()], req(), state(), mstmnte_db:config()) -> {ok, req(), state()}.
+proceed_bulk_get(Ids, Req, State, Config) ->
     case bulk_get_docs(Ids, Config) of
-        {ok, DocsMap} -> send_json(Req1, State, 200, DocsMap);
+        {ok, DocsMap} ->
+            send_json(Req, State, 200, DocsMap);
         {error, Error} when Error =:= not_found orelse Error =:= no_db ->
-            Status = case Error of not_found->404; _->500 end,
-            send_json(Req1, State, Status, #{error => Error})
+            Status = case Error of not_found -> 404; _ -> 500 end,
+            send_json(Req, State, Status, #{error => Error})
     end.
 
 
@@ -128,13 +140,16 @@ maint_patch(Req0, State, Opts) ->
     Config = mstmnte:db_config(Opts),
     {ok, Doc, Req1} = read_json_body(Req0),
     case maps:is_key(<<"_id">>, Doc) of
-        true -> ok;
-        false -> error(bad_request)
-    end,
-    case mstmnte_db:upsert(Doc, Config) of
-        {ok, Saved} -> send_json(Req1, State, 200, Saved);
-        {error, conflict} -> send_json(Req1, State, 409, #{error => conflict});
-        {error, no_db} -> send_json(Req1, State, 500, #{error => no_db})
+        true ->
+            %% Document looks fine, try to upsert.
+            case mstmnte_db:upsert(Doc, Config) of
+                {ok, Saved} -> send_json(Req1, State, 200, Saved);
+                {error, conflict} -> send_json(Req1, State, 409, #{error => conflict});
+                {error, no_db} -> send_json(Req1, State, 500, #{error => no_db})
+            end;
+        false ->
+            %% Malformed request body.
+            send_json(Req1, State, 400, #{error => bad_request})
     end.
 
 
