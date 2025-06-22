@@ -74,14 +74,15 @@ list(Req0, State, Opts) ->
 -spec get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 get(Req0, State, Opts) ->
     Config = mstmnte:db_config(Opts),
-    {Id, Req1} = cowboy_req:binding(<<"id">>, Req0),
+    Id = cowboy_req:binding(id, Req0),
     case mstmnte_db:get(Id, Config) of
         {ok, Doc} ->
-            send_json(Req1, State, 200, Doc);
+            Master = maps:get(<<"payload">>, Doc, #{}),
+            send_json(Req0, State, 200, #{Id => Master});
         {error, not_found} ->
-            send_json(Req1, State, 404, #{error => not_found});
+            send_json(Req0, State, 404, #{error => not_found});
         {error, no_db} ->
-            send_json(Req1, State, 500, #{error => no_db})
+            send_json(Req0, State, 500, #{error => no_db})
     end.
 
 
@@ -110,7 +111,16 @@ maint_list(Req0, State, Opts) ->
 
 -spec maint_get(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
 maint_get(Req0, State, Opts) ->
-    get(Req0, State, Opts).
+    Config = mstmnte:db_config(Opts),
+    Id = cowboy_req:binding(id, Req0),
+    case mstmnte_db:get(Id, Config) of
+        {ok, Doc} ->
+            send_json(Req0, State, 200, Doc);
+        {error, not_found} ->
+            send_json(Req0, State, 404, #{error => not_found});
+        {error, no_db} ->
+            send_json(Req0, State, 500, #{error => no_db})
+    end.
 
 
 -spec maint_patch(req(), state(), mstmnte:opts()) -> {ok, req(), state()}.
